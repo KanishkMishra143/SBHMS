@@ -2,7 +2,7 @@
 
 A prototype bridge-health monitoring system built around an **ESP32-WROOM-32**, an **ADXL345 three-axis accelerometer**, an LCD, and local visual/audio alerts. The repository contains the integrated firmware, hardware diagnostic sketches, and example photographs/graphs from prototype tests.
 
-> **Prototype status:** This is an educational proof of concept, not a certified structural-health monitoring system. The integrated firmware currently uses **simulated load values**; it reserves HX711 pins but does not read the HX711. Vibration thresholds are prototype values and require calibration and validation on the actual mounted structure.
+> **Prototype status:** This is an educational proof of concept, not a certified structural-health monitoring system. The integrated firmware currently uses HX711 as the ADC to convert the analog readings of Load cell to process by ESP32. Vibration thresholds are prototype values and require calibration and validation on the actual mounted structure.
 
 ## Index
 
@@ -32,7 +32,7 @@ A prototype bridge-health monitoring system built around an **ESP32-WROOM-32**, 
 The goal of this project is to demonstrate how a small embedded system can monitor a model bridge, display sensor information locally, and expose a browser-based dashboard over Wi-Fi. The current prototype focuses on two categories of input:
 
 1. **Vibration / acceleration:** the ADXL345 measures acceleration along three axes. The firmware derives a filtered vibration signal and evaluates it against configurable prototype warning and critical criteria.
-2. **Load / overload demonstration:** the integrated interface shows normal, warning, and critical load states. **At present, the load value is simulated in software; it is not a live measurement from the load cell/HX711.**
+2. **Load / overload demonstration:** the integrated interface shows normal, warning, and critical load states.
 
 An I²C LCD provides a local readout. An RGB LED and buzzer provide additional status indications. A web dashboard provides live plots, status cards, and controls for testing the prototype.
 
@@ -79,7 +79,7 @@ The photographs and graphs below are visual records of the prototype and example
   </tr>
 </table>
 
-The LCD photographs show the local display during normal-load, critical-load, baseline-vibration, and abnormal-vibration demonstrations. The RGB indicator supplements the displayed state. The load figures in the integrated firmware are simulated, so the load-state photographs demonstrate the interface and alert path rather than validated load-cell measurements. The acceleration figures are sensor readings and can vary with sensor orientation, mounting rigidity, motion, and environmental noise.
+The LCD photographs show the local display during normal-load, critical-load, baseline-vibration, and abnormal-vibration demonstrations. The RGB indicator supplements the displayed state. The load figures in the integrated firmware are simulated, so the load-state photographs demonstrate the interface and alert path. The acceleration figures can vary with sensor orientation, mounting rigidity, motion, and environmental noise.
 
 ### Vibration Graphs
 
@@ -121,22 +121,7 @@ The baseline captures show comparatively steady traces, while the short-burst an
 
 At a high level, the prototype follows this data and feedback path:
 
-```text
-ADXL345 accelerometer
-        |
-        | I²C (SDA/SCL)
-        v
-      ESP32  <------ Wi-Fi ------> Browser dashboard
-        |
-        +---- I²C ----> 16×2 LCD
-        |
-        +-------------> RGB LED
-        |
-        +-------------> Buzzer driver
-        |
-        +-------------> Simulated load state
-                         (HX711 not read by integrated sketch)
-```
+<img src="images/Monochrome-Bridge-Monitoring-System-Diagram.png" alt="System Architecture" width="100%">
 
 The LCD and ADXL345 share the I²C bus. The ESP32 performs the vibration calculations and updates local and web status. The web interface is hosted by the ESP32 itself, so the browser and board must be reachable on the same local network.
 
@@ -158,9 +143,9 @@ The current firmware uses the following assignments. Confirm them against your a
 ### Important Electrical Notes
 
 - ESP32 GPIOs use 3.3 V logic and are not 5 V tolerant.
-- Use a suitable current-limiting resistor for each RGB LED channel.
+- Use a suitable current-limiting resistor for each RGB LED channel (180R is used here).
 - The current RGB logic assumes a common-anode LED. Verify the actual LED type and pinout.
-- Drive a 5 V buzzer through a suitable transistor/driver stage rather than directly from a GPIO.
+- Drive a 5 V buzzer through a suitable transistor/driver stage rather than directly from a GPIO (BC547 is used here).
 - Keep a common ground between the ESP32 and connected modules.
 - Confirm the LCD backpack and ADXL345 breakout supply and I²C pull-up arrangements are compatible with the ESP32.
 
@@ -209,6 +194,7 @@ The `BHMS.ino` file is the integrated prototype firmware. The `diagnostics/` dir
 - Arduino IDE.
 - Espressif ESP32 board package.
 - A compatible `LiquidCrystal_I2C` library for the LCD.
+- `HX711` library for the ADC. 
 - ESP32 Arduino core networking libraries (`WiFi`, `WebServer`, and `ESPmDNS`), normally included with the ESP32 board package.
 
 The separate HX711 diagnostic requires a compatible HX711 library; see the diagnostics README for details.
@@ -217,9 +203,7 @@ The separate HX711 diagnostic requires a compatible HX711 library; see the diagn
 
 ### 1. Review the Wi-Fi Configuration
 
-Before uploading, open `BHMS.ino` and locate the Wi-Fi credential definitions near the beginning of the file. The firmware currently includes network credentials in source code. **Do not publish real Wi-Fi passwords to a public repository.**
-
-Replace credentials with local values and commit only placeholders, or refactor the sketch to load credentials from a local, Git-ignored secrets file. If real credentials have already been pushed to a public repository, changing the file is not sufficient: rotate those passwords as well.
+Before uploading, open `BHMS.ino` and locate the Wi-Fi credential definitions near the beginning of the file. The firmware currently includes network credentials in source code. 
 
 ### 2. Open the Integrated Sketch
 
@@ -321,7 +305,7 @@ Keep test conditions and threshold changes documented in the repository so resul
 
 ## Known Limitations
 
-- The integrated load value is simulated; the HX711 is not read by `BHMS.ino`.
+- The integrated load value is simulated for the time being in the `BHMS.ino`.
 - Vibration thresholds are prototype settings and are not validated for real structural-health monitoring.
 - The ADXL345 is a general-purpose accelerometer; the quality of vibration interpretation depends on mounting, sampling, filtering, and calibration.
 - A browser dashboard on the local network is not an authenticated or encrypted remote-monitoring service.
@@ -334,7 +318,7 @@ Keep test conditions and threshold changes documented in the repository so resul
 ### The ESP32 Does Not Connect to Wi-Fi
 
 - Verify the SSID and password in the local sketch.
-- Confirm that the network provides 2.4 GHz Wi-Fi.
+- Confirm that the network provides 2.4 GHz Wi-Fi. `Turn on Extend Compatibility (2.4GHz) settings in case of device.`
 - Check the serial output for the assigned IP address and connection state.
 - Try the IP address directly if `dashboard.local` does not resolve.
 - Ensure the browser device and ESP32 are on the same reachable network and that client isolation is disabled.
@@ -352,6 +336,7 @@ Keep test conditions and threshold changes documented in the repository so resul
 - Check whether the address is `0x53` or `0x1D`.
 - Verify SDA/SCL, power, and ground.
 - Check that the sensor breakout is an ADXL345-compatible board.
+- Finally, adjust the contrast by turning the potentiometer on the back of the LCD's I²C Backpack.
 
 ### The Vibration State Changes Unexpectedly
 
