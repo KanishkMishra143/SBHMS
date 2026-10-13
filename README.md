@@ -69,7 +69,7 @@ The photographs and graphs below are visual records of the prototype and example
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="images/Screen%20-Baseline%20Vibrations%20-%201.jpg" alt="LCD showing baseline acceleration readings" width="100%">
+      <img src="images/Screen%20-%20Baseline%20Vibrations%20-%201.jpg" alt="LCD showing baseline acceleration readings" width="100%">
       <br><strong>Baseline vibration display</strong>
     </td>
     <td align="center" width="50%">
