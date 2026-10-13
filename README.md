@@ -73,7 +73,7 @@ The photographs and graphs below are visual records of the prototype and example
       <br><strong>Baseline vibration display</strong>
     </td>
     <td align="center" width="50%">
-      <img src="images/Screen%20-%20Abnormal%20Vibrations%20-%201.jpg" alt="LCD showing acceleration readings during an abnormal vibration demonstration" width="100%">
+      <img src="images/Screen - Abnormal Vibrations - 01.jpg" alt="LCD showing acceleration readings during an abnormal vibration demonstration" width="100%">
       <br><strong>Abnormal vibration display</strong>
     </td>
   </tr>
