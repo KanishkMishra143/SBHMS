@@ -2,7 +2,7 @@
 
 A prototype bridge-health monitoring system built around an **ESP32-WROOM-32**, an **ADXL345 three-axis accelerometer**, an LCD, and local visual/audio alerts. The repository contains the integrated firmware, hardware diagnostic sketches, and example photographs/graphs from prototype tests.
 
-> **Prototype status:** This is an educational proof of concept, not a certified structural-health monitoring system. The integrated firmware currently uses **simulated load values**; it reserves HX711 pins but does not read the HX711. Vibration thresholds are prototype values and require calibration and validation on the actual mounted structure.
+> **Prototype status:** This is an educational proof of concept, not a certified structural-health monitoring system. The integrated firmware currently uses HX711 ADC. Vibration thresholds are prototype values and require calibration and validation on the actual mounted structure.
 
 ## Index
 
@@ -32,7 +32,7 @@ A prototype bridge-health monitoring system built around an **ESP32-WROOM-32**, 
 The goal of this project is to demonstrate how a small embedded system can monitor a model bridge, display sensor information locally, and expose a browser-based dashboard over Wi-Fi. The current prototype focuses on two categories of input:
 
 1. **Vibration / acceleration:** the ADXL345 measures acceleration along three axes. The firmware derives a filtered vibration signal and evaluates it against configurable prototype warning and critical criteria.
-2. **Load / overload demonstration:** the integrated interface shows normal, warning, and critical load states. **At present, the load value is simulated in software; it is not a live measurement from the load cell/HX711.**
+2. **Load / overload demonstration:** the integrated interface shows normal, warning, and critical load states.
 
 An I²C LCD provides a local readout. An RGB LED and buzzer provide additional status indications. A web dashboard provides live plots, status cards, and controls for testing the prototype.
 
@@ -69,7 +69,7 @@ The photographs and graphs below are visual records of the prototype and example
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="images/Screen%20-%20Baseline%20Vibrations%20-%201.jpg" alt="LCD showing baseline acceleration readings" width="100%">
+      <img src="images/Screen%20-Baseline%20Vibrations%20-%201.jpg" alt="LCD showing baseline acceleration readings" width="100%">
       <br><strong>Baseline vibration display</strong>
     </td>
     <td align="center" width="50%">
@@ -370,4 +370,3 @@ This is expected with the current integrated firmware: load is simulated. Use `0
 This repository demonstrates embedded sensing, local status indication, and a Wi-Fi dashboard on a model bridge. It is not designed, certified, or validated for monitoring a real bridge or making safety-critical decisions.
 
 Use suitable electrical protection, verify voltage and logic-level compatibility, and disconnect power before modifying wiring. Do not expose the unauthenticated HTTP diagnostic/dashboard to untrusted networks. Do not rely on the prototype's thresholds, simulated load values, or example plots to determine whether a structure is safe.
-
