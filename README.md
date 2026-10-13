@@ -137,8 +137,8 @@ The current firmware uses the following assignments. Confirm them against your a
 | RGB LED — Green | GPIO 26 | Active LOW in the firmware |
 | RGB LED — Blue | GPIO 27 | Active LOW in the firmware |
 | Buzzer driver input | GPIO 25 | Active HIGH control; use a suitable transistor driver |
-| HX711 DOUT | GPIO 33 | Reserved; not read by integrated firmware |
-| HX711 SCK | GPIO 32 | Reserved; not read by integrated firmware |
+| HX711 DOUT | GPIO 33 | Used by standalone diagnostics; integration status is described below |
+| HX711 SCK | GPIO 32 | Used by standalone diagnostics; integration status is described below |
 
 ### Important Electrical Notes
 
@@ -172,7 +172,8 @@ The current firmware uses the following assignments. Confirm them against your a
     ├── 03_LCD_I2C_Test.ino
     ├── 04_RGB_Buzzer_Test.ino
     ├── 05_HX711_Raw_Diagnostic.ino
-    └── 06_WiFi_HTTP_Diagnostic.ino
+    ├── 06_WiFi_HTTP_Diagnostic.ino
+    └── 07_HX711_Calibration_Factor.ino
 ```
 
 The `BHMS.ino` file is the integrated prototype firmware. The `diagnostics/` directory contains standalone sketches intended to isolate and test individual hardware modules. Read [`diagnostics/README.MD`](diagnostics/README.MD) before running those sketches.
@@ -197,7 +198,7 @@ The `BHMS.ino` file is the integrated prototype firmware. The `diagnostics/` dir
 - `HX711` library for the ADC. 
 - ESP32 Arduino core networking libraries (`WiFi`, `WebServer`, and `ESPmDNS`), normally included with the ESP32 board package.
 
-The separate HX711 diagnostic requires a compatible HX711 library; see the diagnostics README for details.
+The HX711 raw and calibration diagnostics require a compatible HX711 library; see the diagnostics README for wiring, calibration steps, and details.
 
 ## Getting Started
 
@@ -263,6 +264,8 @@ The firmware uses filtered acceleration magnitude to detect qualifying local pea
 
 ## Load Monitoring Status
 
+Use [`07_HX711_Calibration_Factor.ino`](diagnostics/07_HX711_Calibration_Factor.ino) to calculate the HX711 calibration factor from a known mass. This is a standalone calibration utility; it does not automatically modify or integrate load-cell readings into the main firmware.
+
 The project hardware includes an HX711/load-cell diagnostic sketch, but the integrated `BHMS.ino` currently does not read the HX711. The HX711 pins are reserved in the code, and the dashboard's load state is simulated.
 
 Consequently:
@@ -276,7 +279,7 @@ Do not describe the current prototype as having verified live overload detection
 
 ## Diagnostics
 
-The [`diagnostics/`](diagnostics/) directory contains six standalone sketches:
+The [`diagnostics/`](diagnostics/) directory contains seven standalone sketches:
 
 | Sketch | Purpose |
 |---|---|
@@ -286,6 +289,7 @@ The [`diagnostics/`](diagnostics/) directory contains six standalone sketches:
 | `04_RGB_Buzzer_Test.ino` | Tests the RGB LED channels and buzzer driver |
 | `05_HX711_Raw_Diagnostic.ino` | Checks HX711 readiness and raw ADC readings |
 | `06_WiFi_HTTP_Diagnostic.ino` | Tests Wi-Fi and a simple HTTP endpoint |
+| `07_HX711_Calibration_Factor.ino` | Calculates an HX711 calibration factor using a known mass and checks the result |
 
 Run them one at a time and consult [`diagnostics/README.MD`](diagnostics/README.MD) for wiring, library requirements, commands, and expected behaviour. Uploading a diagnostic sketch replaces the integrated program on the ESP32 until `BHMS.ino` is uploaded again.
 

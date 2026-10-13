@@ -21,6 +21,7 @@ These sketches are intended for **bring-up, wiring verification, and troubleshoo
   - [04 — RGB LED and Buzzer Test](#04--rgb-led-and-buzzer-test)
   - [05 — HX711 Raw Diagnostic](#05--hx711-raw-diagnostic)
   - [06 — Wi-Fi and HTTP Diagnostic](#06--wi-fi-and-http-diagnostic)
+  - [07 — HX711 Calibration Factor](#07--hx711-calibration-factor)
 - [Recommended Test Order](#recommended-test-order)
 - [Troubleshooting](#troubleshooting)
 - [Safety and Limitations](#safety-and-limitations)
@@ -39,8 +40,9 @@ These sketches are intended for **bring-up, wiring verification, and troubleshoo
 | `04_RGB_Buzzer_Test.ino` | RGB LED and buzzer driver | Tests LED channels and buzzer control independently |
 | `05_HX711_Raw_Diagnostic.ino` | HX711 load-cell ADC interface | Checks readiness and reports raw ADC counts without applying calibration |
 | `06_WiFi_HTTP_Diagnostic.ino` | Wi-Fi, mDNS, and HTTP | Checks network connection and serves a small diagnostic web page |
+| `07_HX711_Calibration_Factor.ino` | HX711 calibration | Calculates counts-per-gram from a known mass and verifies readings |
 
-Each `.ino` file is a **separate Arduino sketch**. Upload and test them individually; do not combine all six files into one Arduino sketch.
+Each `.ino` file is a **separate Arduino sketch**. Upload and test them individually; do not combine all seven files into one Arduino sketch.
 
 ## Hardware and Wiring Reference
 
@@ -118,7 +120,7 @@ The `Wire`, `WiFi`, `WebServer`, and `ESPmDNS` libraries are supplied with the E
 Install these through **Arduino IDE → Library Manager** when testing the corresponding module:
 
 - **`LiquidCrystal_I2C`** — required by `03_LCD_I2C_Test.ino`. Use a version compatible with the API used in the sketch (`LiquidCrystal_I2C lcd(address, columns, rows)`, `lcd.init()`, and `lcd.backlight()`).
-- **`HX711` by Bogdan Necula (`bogde`)**, or a compatible library exposing the same API — required by `05_HX711_Raw_Diagnostic.ino`.
+- **`HX711` by Bogdan Necula (`bogde`)**, or a compatible library exposing the same API — required by `05_HX711_Raw_Diagnostic.ino` and `07_HX711_Calibration_Factor.ino`.
 
 The I²C scanner and ADXL345 diagnostic use `Wire`; the RGB/buzzer sketch uses standard GPIO functions; and the Wi-Fi diagnostic uses the ESP32 Arduino core's networking libraries.
 
@@ -413,7 +415,7 @@ Install the `HX711` library by Bogdan Necula (`bogde`) or a compatible library e
 - Try a shorter, tidier signal-wire arrangement and keep it away from noisy power wiring.
 - Confirm the expected HX711 library is installed.
 
-Do not use this diagnostic as a calibrated weighing instrument or as evidence that a final load threshold is accurate.
+Do not use this diagnostic as a calibrated weighing instrument or as evidence that a final load threshold is accurate. After raw readings are stable, use `07_HX711_Calibration_Factor.ino` to calculate a factor from a known mass.
 
 ### 06 — Wi-Fi and HTTP Diagnostic
 
@@ -475,6 +477,67 @@ The server uses HTTP port 80. The diagnostic server is intended for a trusted lo
 
 ---
 
+### 07 — HX711 Calibration Factor
+
+**File:** `07_HX711_Calibration_Factor.ino`
+
+**Purpose:** Calculates a calibration factor for the load cell and HX711 using a known reference mass. Unlike the raw diagnostic, this sketch is intended to establish the counts-per-gram factor needed to convert raw ADC changes into mass units in a later integrated firmware implementation.
+
+#### Wiring
+
+- HX711 DOUT / DT → GPIO 33
+- HX711 SCK / CLK → GPIO 32
+- HX711 GND → ESP32 GND
+- Connect the load cell to the HX711 according to the module's terminal labels and the load cell documentation.
+- If the LCD is connected, it uses SDA GPIO 21 and SCL GPIO 22.
+
+#### Calibration Procedure
+
+1. Ensure the load cell is mounted securely and the platform is not touching anything except the intended load-cell mounting points.
+2. Upload `07_HX711_Calibration_Factor.ino`.
+3. Open Serial Monitor at **115200 baud** and select **Newline**.
+4. Remove all load from the platform and enter `TARE`. The sketch takes a set of readings to establish a zero reference.
+5. Place a known mass on the platform. Use the mass in grams; for example, a 1 kg reference mass is entered as `CAL 1000`.
+6. Record the reported calibration factor, including its sign.
+7. Remove the mass and check the zero reading. Reapply the known mass and verify that the measured result is close to the reference value.
+8. Repeat the procedure if readings drift, fluctuate substantially, or do not return near zero.
+
+#### Commands
+
+| Command | Action |
+|---|---|
+| `HELP` | Prints available commands |
+| `INFO` | Prints pin assignments and calibration guidance |
+| `RAW` | Prints a raw reading when the HX711 is ready |
+| `TARE` | Establishes the unloaded reference from averaged readings |
+| `CAL <grams>` | Calculates the calibration factor using the currently applied known mass in grams |
+| `WEIGH` | Reports the current mass using the factor calculated during this session |
+| `CLEAR` | Clears the current calibration factor/reference state, if supported by the sketch |
+
+Use the exact commands printed by the sketch's `HELP` output if the installed version differs.
+
+#### Calibration Formula
+
+The factor is calculated from the change between loaded and unloaded raw readings:
+
+\[
+\text{Calibration factor} =
+\frac{\text{loaded raw average} - \text{tare raw average}}
+{\text{known mass in grams}}
+\]
+
+The unit is **raw counts per gram**. A negative factor can be valid because it depends on signal polarity and wiring. Preserve the sign exactly as reported by the sketch.
+
+#### Important Notes
+
+- Use a known, stable reference mass and enter its value in grams.
+- The platform must be mechanically stable and must not rub against the frame or wiring.
+- Keep load-cell signal wires away from noisy power wiring where possible.
+- Do not assume that a calibration factor from one mounting arrangement will remain valid after mechanical changes.
+- The factor is a diagnostic result; record it before resetting the ESP32. Do not assume it is permanently saved unless the sketch explicitly says so.
+- Calibration accuracy depends on the load cell, HX711 module, mounting, power, noise, and reference mass.
+- This sketch does not automatically integrate calibrated measurements into `BHMS.ino`.
+
 ## Recommended Test Order
 
 Testing in this order helps separate wiring, sensor, output, and network issues:
@@ -484,7 +547,8 @@ Testing in this order helps separate wiring, sensor, output, and network issues:
 3. **ADXL345 diagnostic** — confirm device ID and plausible acceleration readings; use the Plotter if helpful.
 4. **RGB LED and buzzer test** — verify each output and the buzzer transistor stage.
 5. **HX711 raw diagnostic** — confirm readiness and observe whether raw counts respond to load changes.
-6. **Wi-Fi and HTTP diagnostic** — confirm connectivity and browser access.
+6. **HX711 calibration-factor diagnostic** — once raw readings are stable, calculate and verify the factor with a known mass.
+7. **Wi-Fi and HTTP diagnostic** — confirm connectivity and browser access.
 
 Once each module has passed its isolated test, upload the main Bridge Health Monitor firmware and verify the integrated behavior again. A module passing its standalone test does not guarantee the full system will work without pin conflicts, power issues, or software integration problems.
 
@@ -561,11 +625,13 @@ bridge-monitor-diagnostics/
 │   └── 04_RGB_Buzzer_Test.ino
 ├── 05_HX711_Raw_Diagnostic/
 │   └── 05_HX711_Raw_Diagnostic.ino
-└── 06_WiFi_HTTP_Diagnostic/
-    └── 06_WiFi_HTTP_Diagnostic.ino
+├── 06_WiFi_HTTP_Diagnostic/
+│   └── 06_WiFi_HTTP_Diagnostic.ino
+└── 07_HX711_Calibration_Factor/
+    └── 07_HX711_Calibration_Factor.ino
 ```
 
-Arduino IDE generally expects a sketch folder to contain a primary `.ino` file with the same name as the folder. If you prefer to keep all six `.ino` files directly in one directory for GitHub browsing, that is fine too; open each sketch individually when using Arduino IDE.
+Arduino IDE generally expects a sketch folder to contain a primary `.ino` file with the same name as the folder. If you prefer to keep all seven `.ino` files directly in one directory for GitHub browsing, that is fine too; open each sketch individually when using Arduino IDE.
 
 ---
 
