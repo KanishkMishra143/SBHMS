@@ -69,11 +69,11 @@ The photographs and graphs below are visual records of the prototype and example
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="./images/Screen%20-Baseline%20Vibrations%20-%201.jpg" alt="LCD showing baseline acceleration readings" width="100%">
+      <img src="./images/screen-baseline-vibrations-1.jpg" alt="LCD showing baseline acceleration readings" width="100%">
       <br><strong>Baseline vibration display</strong>
     </td>
     <td align="center" width="50%">
-      <img src="./images/Screen%20-%20Abnormal%20Vibrations%20-%201.jpg" alt="LCD showing acceleration readings during an abnormal vibration demonstration" width="100%">
+      <img src="./images/screen-abnormal-vibrations-1.jpg" alt="LCD showing acceleration readings during an abnormal vibration demonstration" width="100%">
       <br><strong>Abnormal vibration display</strong>
     </td>
   </tr>
@@ -173,8 +173,8 @@ The current firmware uses the following assignments. Confirm them against your a
 ├── images/
 │   ├── Screen - Normal Load - 1.jpg
 │   ├── Screen - Critical Load - 1.jpg
-│   ├── Screen -Baseline Vibrations - 1.jpg
-│   ├── Screen - Abnormal Vibrations - 1.jpg
+│   ├── screen-baseline-vibrations-1.jpg
+│   ├── screen-abnormal-vibrations-1.jpg
 │   ├── Graph - Baseline Vibrations - 1 - Light Mode(2) - Black Border.png
 │   ├── Graph - Baseline Vibrations - 2 - Light Mode(1) - Black Border.png
 │   ├── Graph - Short Burst Vibrations - 1 - Light Mode(1) - Black Border.png
